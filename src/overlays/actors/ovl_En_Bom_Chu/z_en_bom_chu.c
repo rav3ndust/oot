@@ -212,7 +212,7 @@ void EnBomChu_WaitForRelease(EnBomChu* this, GlobalContext* globalCtx) {
 
     if (Actor_HasNoParent(&this->actor, globalCtx)) {
         this->actor.world.pos = player->actor.world.pos;
-        Actor_UpdateBgCheckInfo(globalCtx, &this->actor, 0.0f, 0.0f, 0.0f, 4);
+        Actor_UpdateBgCheckInfo(globalCtx, &this->actor, 0.0f, 0.0f, 0.0f, UPDBGCHECKINFO_FLAG_2);
         this->actor.shape.rot.y = player->actor.shape.rot.y;
 
         // rot.y = 0 -> +z (forwards in model space)
@@ -357,17 +357,17 @@ void EnBomChu_WaitForKill(EnBomChu* this, GlobalContext* globalCtx) {
 
 /**
  * Transform coordinates from model space to world space, according to current orientation.
- * `posModel` is expected to already be at world scale (1/100 compared to model scale)
+ * `modelPos` is expected to already be at world scale (1/100 compared to model scale)
  */
-void EnBomChu_ModelToWorld(EnBomChu* this, Vec3f* posModel, Vec3f* dest) {
-    f32 x = posModel->x + this->visualJitter;
+void EnBomChu_ModelToWorld(EnBomChu* this, Vec3f* modelPos, Vec3f* dest) {
+    f32 x = modelPos->x + this->visualJitter;
 
-    dest->x = this->actor.world.pos.x + (this->axisLeft.x * x) + (this->axisUp.x * posModel->y) +
-              (this->axisForwards.x * posModel->z);
-    dest->y = this->actor.world.pos.y + (this->axisLeft.y * x) + (this->axisUp.y * posModel->y) +
-              (this->axisForwards.y * posModel->z);
-    dest->z = this->actor.world.pos.z + (this->axisLeft.z * x) + (this->axisUp.z * posModel->y) +
-              (this->axisForwards.z * posModel->z);
+    dest->x = this->actor.world.pos.x + (this->axisLeft.x * x) + (this->axisUp.x * modelPos->y) +
+              (this->axisForwards.x * modelPos->z);
+    dest->y = this->actor.world.pos.y + (this->axisLeft.y * x) + (this->axisUp.y * modelPos->y) +
+              (this->axisForwards.y * modelPos->z);
+    dest->z = this->actor.world.pos.z + (this->axisLeft.z * x) + (this->axisUp.z * modelPos->y) +
+              (this->axisForwards.z * modelPos->z);
 }
 
 void EnBomChu_SpawnRipples(EnBomChu* this, GlobalContext* globalCtx, f32 y) {

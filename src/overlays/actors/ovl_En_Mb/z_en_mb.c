@@ -1422,7 +1422,9 @@ void EnMb_Update(Actor* thisx, GlobalContext* globalCtx) {
     if (thisx->colChkInfo.damageEffect != ENMB_DMGEFF_FREEZE) {
         this->actionFunc(this, globalCtx);
         Actor_MoveForward(thisx);
-        Actor_UpdateBgCheckInfo(globalCtx, thisx, 40.0f, 40.0f, 70.0f, 0x1D);
+        Actor_UpdateBgCheckInfo(globalCtx, thisx, 40.0f, 40.0f, 70.0f,
+                                UPDBGCHECKINFO_FLAG_0 | UPDBGCHECKINFO_FLAG_2 | UPDBGCHECKINFO_FLAG_3 |
+                                    UPDBGCHECKINFO_FLAG_4);
         Actor_SetFocus(thisx, thisx->scale.x * 4500.0f);
         Collider_UpdateCylinder(thisx, &this->hitbox);
         if (thisx->colChkInfo.health <= 0) {
@@ -1446,7 +1448,7 @@ void EnMb_Update(Actor* thisx, GlobalContext* globalCtx) {
 void EnMb_PostLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, Vec3s* rot, void* thisx) {
     static Vec3f unused = { 1100.0f, -700.0f, 0.0f };
     static Vec3f feetPos = { 0.0f, 0.0f, 0.0f };
-    static Vec3f effSpawnPosModel = { 0.0f, -8000.0f, 0.0f };
+    static Vec3f effSpawnModelPos = { 0.0f, -8000.0f, 0.0f };
     static Vec3f zeroVec = { 0.0f, 0.0f, 0.0f };
     s32 bodyPart = -1;
     EnMb* this = (EnMb*)thisx;
@@ -1454,7 +1456,7 @@ void EnMb_PostLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, Vec
 
     if (this->actor.params == ENMB_TYPE_CLUB) {
         if (limbIndex == ENMB_LIMB_LHAND) {
-            Matrix_MultVec3f(&effSpawnPosModel, &this->effSpawnPos);
+            Matrix_MultVec3f(&effSpawnModelPos, &this->effSpawnPos);
             if (this->attack > ENMB_ATTACK_NONE) {
                 EnMb_ClubUpdateAttackCollider(&this->actor, globalCtx);
             }

@@ -479,8 +479,10 @@ void func_80AFD968(EnSkb* this, GlobalContext* globalCtx) {
                     if (this->unk_283 == 0) {
                         if ((this->actor.colChkInfo.damageEffect == 0xD) ||
                             ((this->actor.colChkInfo.damageEffect == 0xE) &&
-                             ((player->swordAnimation >= 4 && player->swordAnimation <= 11) ||
-                              (player->swordAnimation == 20 || player->swordAnimation == 21)))) {
+                             ((player->meleeWeaponAnimation >= PLAYER_MWA_RIGHT_SLASH_1H &&
+                               player->meleeWeaponAnimation <= PLAYER_MWA_LEFT_COMBO_2H) ||
+                              (player->meleeWeaponAnimation == PLAYER_MWA_BACKSLASH_RIGHT ||
+                               player->meleeWeaponAnimation == PLAYER_MWA_BACKSLASH_LEFT)))) {
                             BodyBreak_Alloc(&this->bodyBreak, 2, globalCtx);
                             this->unk_283 = 1;
                         }
@@ -498,7 +500,9 @@ void EnSkb_Update(Actor* thisx, GlobalContext* globalCtx) {
 
     func_80AFD968(this, globalCtx);
     Actor_MoveForward(&this->actor);
-    Actor_UpdateBgCheckInfo(globalCtx, &this->actor, 15.0f, 30.0f, 60.0f, 0x1D);
+    Actor_UpdateBgCheckInfo(globalCtx, &this->actor, 15.0f, 30.0f, 60.0f,
+                            UPDBGCHECKINFO_FLAG_0 | UPDBGCHECKINFO_FLAG_2 | UPDBGCHECKINFO_FLAG_3 |
+                                UPDBGCHECKINFO_FLAG_4);
     this->actionFunc(this, globalCtx);
     this->actor.focus.pos = this->actor.world.pos;
     this->actor.focus.pos.y += (3000.0f * this->actor.scale.y);

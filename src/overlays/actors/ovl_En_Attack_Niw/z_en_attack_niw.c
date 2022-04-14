@@ -187,13 +187,13 @@ void func_809B5670(EnAttackNiw* this, GlobalContext* globalCtx) {
 
     this->actor.speedXZ = 10.0f;
 
-    tmpf1 = (this->unk_298.x + globalCtx->view.lookAt.x) - globalCtx->view.eye.x;
-    tmpf2 = (this->unk_298.y + globalCtx->view.lookAt.y) - globalCtx->view.eye.y;
-    tmpf3 = (this->unk_298.z + globalCtx->view.lookAt.z) - globalCtx->view.eye.z;
+    tmpf1 = (this->unk_298.x + globalCtx->view.at.x) - globalCtx->view.eye.x;
+    tmpf2 = (this->unk_298.y + globalCtx->view.at.y) - globalCtx->view.eye.y;
+    tmpf3 = (this->unk_298.z + globalCtx->view.at.z) - globalCtx->view.eye.z;
 
-    sp34.x = globalCtx->view.lookAt.x + tmpf1;
-    sp34.y = globalCtx->view.lookAt.y + tmpf2;
-    sp34.z = globalCtx->view.lookAt.z + tmpf3;
+    sp34.x = globalCtx->view.at.x + tmpf1;
+    sp34.y = globalCtx->view.at.y + tmpf2;
+    sp34.z = globalCtx->view.at.z + tmpf3;
 
     this->unk_2D4 = Math_Vec3f_Yaw(&this->actor.world.pos, &sp34);
     this->unk_2D0 = Math_Vec3f_Pitch(&this->actor.world.pos, &sp34) * -1.0f;
@@ -327,7 +327,9 @@ void EnAttackNiw_Update(Actor* thisx, GlobalContext* globalCtx) {
     this->actor.shape.rot = this->actor.world.rot;
     this->actor.shape.shadowScale = 15.0f;
     this->actionFunc(this, globalCtx2);
-    Actor_UpdateBgCheckInfo(globalCtx, &this->actor, 20.0f, 20.0f, 60.0f, 0x1D);
+    Actor_UpdateBgCheckInfo(globalCtx, &this->actor, 20.0f, 20.0f, 60.0f,
+                            UPDBGCHECKINFO_FLAG_0 | UPDBGCHECKINFO_FLAG_2 | UPDBGCHECKINFO_FLAG_3 |
+                                UPDBGCHECKINFO_FLAG_4);
 
     if (this->actionFunc == func_809B5670) {
         func_8002D97C(&this->actor);

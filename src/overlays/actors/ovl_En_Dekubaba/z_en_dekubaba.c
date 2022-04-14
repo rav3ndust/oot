@@ -1122,9 +1122,10 @@ void EnDekubaba_Update(Actor* thisx, GlobalContext* globalCtx) {
 
     if (this->actionFunc == EnDekubaba_PrunedSomersault) {
         Actor_MoveForward(&this->actor);
-        Actor_UpdateBgCheckInfo(globalCtx, &this->actor, 10.0f, this->size * 15.0f, 10.0f, 5);
+        Actor_UpdateBgCheckInfo(globalCtx, &this->actor, 10.0f, this->size * 15.0f, 10.0f,
+                                UPDBGCHECKINFO_FLAG_0 | UPDBGCHECKINFO_FLAG_2);
     } else if (this->actionFunc != EnDekubaba_DeadStickDrop) {
-        Actor_UpdateBgCheckInfo(globalCtx, &this->actor, 0.0f, 0.0f, 0.0f, 4);
+        Actor_UpdateBgCheckInfo(globalCtx, &this->actor, 0.0f, 0.0f, 0.0f, UPDBGCHECKINFO_FLAG_2);
         if (this->boundFloor == NULL) {
             this->boundFloor = this->actor.floorPoly;
         }
@@ -1293,7 +1294,7 @@ void EnDekubaba_Draw(Actor* thisx, GlobalContext* globalCtx) {
 
         scale = this->size * 0.01f;
         Matrix_Translate(this->actor.home.pos.x, this->actor.home.pos.y, this->actor.home.pos.z, MTXMODE_NEW);
-        Matrix_RotateY(this->actor.home.rot.y * (M_PI / 0x8000), MTXMODE_APPLY);
+        Matrix_RotateY(BINANG_TO_RAD(this->actor.home.rot.y), MTXMODE_APPLY);
         Matrix_Scale(scale, scale, scale, MTXMODE_APPLY);
         gSPMatrix(POLY_OPA_DISP++, Matrix_NewMtx(globalCtx->state.gfxCtx, "../z_en_dekubaba.c", 2780),
                   G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);

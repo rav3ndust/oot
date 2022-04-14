@@ -418,9 +418,10 @@ void EnKarebaba_Update(Actor* thisx, GlobalContext* globalCtx) {
     if (this->actionFunc != EnKarebaba_Dead) {
         if (this->actionFunc == EnKarebaba_Dying) {
             Actor_MoveForward(&this->actor);
-            Actor_UpdateBgCheckInfo(globalCtx, &this->actor, 10.0f, 15.0f, 10.0f, 5);
+            Actor_UpdateBgCheckInfo(globalCtx, &this->actor, 10.0f, 15.0f, 10.0f,
+                                    UPDBGCHECKINFO_FLAG_0 | UPDBGCHECKINFO_FLAG_2);
         } else {
-            Actor_UpdateBgCheckInfo(globalCtx, &this->actor, 0.0f, 0.0f, 0.0f, 4);
+            Actor_UpdateBgCheckInfo(globalCtx, &this->actor, 0.0f, 0.0f, 0.0f, UPDBGCHECKINFO_FLAG_2);
             if (this->boundFloor == NULL) {
                 this->boundFloor = this->actor.floorPoly;
             }
@@ -520,7 +521,7 @@ void EnKarebaba_Draw(Actor* thisx, GlobalContext* globalCtx) {
     }
 
     Matrix_Scale(scale, scale, scale, MTXMODE_APPLY);
-    Matrix_RotateY(this->actor.home.rot.y * (M_PI / 0x8000), MTXMODE_APPLY);
+    Matrix_RotateY(BINANG_TO_RAD(this->actor.home.rot.y), MTXMODE_APPLY);
     gSPMatrix(POLY_OPA_DISP++, Matrix_NewMtx(globalCtx->state.gfxCtx, "../z_en_karebaba.c", 1144),
               G_MTX_LOAD | G_MTX_NOPUSH | G_MTX_MODELVIEW);
     gSPDisplayList(POLY_OPA_DISP++, gDekuBabaBaseLeavesDL);

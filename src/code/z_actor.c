@@ -47,7 +47,7 @@ void ActorShadow_Draw(Actor* actor, Lights* lights, GlobalContext* globalCtx, Gf
             Matrix_Put(&sp60);
 
             if (dlist != gCircleShadowDL) {
-                Matrix_RotateY(actor->shape.rot.y * (M_PI / 0x8000), MTXMODE_APPLY);
+                Matrix_RotateY(BINANG_TO_RAD(actor->shape.rot.y), MTXMODE_APPLY);
             }
 
             temp2 = (1.0f - (temp1 * (1.0f / 350))) * actor->shape.shadowScale;
@@ -398,7 +398,7 @@ void func_8002C124(TargetContext* targetCtx, GlobalContext* globalCtx) {
 
         Matrix_Translate(actor->focus.pos.x, actor->focus.pos.y + (actor->targetArrowOffset * actor->scale.y) + 17.0f,
                          actor->focus.pos.z, MTXMODE_NEW);
-        Matrix_RotateY((f32)((u16)(globalCtx->gameplayFrames * 3000)) * (M_PI / 0x8000), MTXMODE_APPLY);
+        Matrix_RotateY(BINANG_TO_RAD((u16)(globalCtx->gameplayFrames * 3000)), MTXMODE_APPLY);
         Matrix_Scale((iREG(27) + 35) / 1000.0f, (iREG(28) + 60) / 1000.0f, (iREG(29) + 50) / 1000.0f, MTXMODE_APPLY);
 
         gDPSetPrimColor(POLY_XLU_DISP++, 0, 0, naviColor->inner.r, naviColor->inner.g, naviColor->inner.b, 255);
@@ -544,7 +544,7 @@ void Flags_UnsetSwitch(GlobalContext* globalCtx, s32 flag) {
 }
 
 /**
- * Tests if current scene unknown flag is set.
+ * Tests if unknown flag is set.
  */
 s32 Flags_GetUnknown(GlobalContext* globalCtx, s32 flag) {
     if (flag < 0x20) {
@@ -555,7 +555,7 @@ s32 Flags_GetUnknown(GlobalContext* globalCtx, s32 flag) {
 }
 
 /**
- * Sets current scene unknown flag.
+ * Sets unknown flag.
  */
 void Flags_SetUnknown(GlobalContext* globalCtx, s32 flag) {
     if (flag < 0x20) {
@@ -566,7 +566,7 @@ void Flags_SetUnknown(GlobalContext* globalCtx, s32 flag) {
 }
 
 /**
- * Unsets current scene unknown flag.
+ * Unsets unknown flag.
  */
 void Flags_UnsetUnknown(GlobalContext* globalCtx, s32 flag) {
     if (flag < 0x20) {
@@ -1157,7 +1157,7 @@ s32 func_8002E234(Actor* actor, f32 arg1, s32 arg2) {
         actor->bgCheckFlags &= ~BGCHECKFLAG_GROUND;
         actor->bgCheckFlags |= BGCHECKFLAG_GROUND_LEAVE;
 
-        if ((actor->velocity.y < 0.0f) && (arg2 & 0x10)) {
+        if ((actor->velocity.y < 0.0f) && (arg2 & UPDBGCHECKINFO_FLAG_4)) {
             actor->velocity.y = 0.0f;
         }
 
@@ -1203,7 +1203,7 @@ s32 func_8002E2AC(GlobalContext* globalCtx, Actor* actor, Vec3f* arg2, s32 arg3)
         if (actor->velocity.y <= 0.0f) {
             if (!(actor->bgCheckFlags & BGCHECKFLAG_GROUND)) {
                 actor->bgCheckFlags |= BGCHECKFLAG_GROUND_TOUCH;
-            } else if ((arg3 & 0x8) && (actor->gravity < 0.0f)) {
+            } else if ((arg3 & UPDBGCHECKINFO_FLAG_3) && (actor->gravity < 0.0f)) {
                 actor->velocity.y = -4.0f;
             } else {
                 actor->velocity.y = 0.0f;
@@ -1241,11 +1241,11 @@ void Actor_UpdateBgCheckInfo(GlobalContext* globalCtx, Actor* actor, f32 wallChe
         func_800433A4(&globalCtx->colCtx, actor->floorBgId, actor);
     }
 
-    if (flags & 1) {
-        if ((!(flags & 0x80) &&
+    if (flags & UPDBGCHECKINFO_FLAG_0) {
+        if ((!(flags & UPDBGCHECKINFO_FLAG_7) &&
              BgCheck_EntitySphVsWall3(&globalCtx->colCtx, &sp64, &actor->world.pos, &actor->prevPos, wallCheckRadius,
                                       &actor->wallPoly, &bgId, actor, wallCheckHeight)) ||
-            ((flags & 0x80) &&
+            ((flags & UPDBGCHECKINFO_FLAG_7) &&
              BgCheck_EntitySphVsWall4(&globalCtx->colCtx, &sp64, &actor->world.pos, &actor->prevPos, wallCheckRadius,
                                       &actor->wallPoly, &bgId, actor, wallCheckHeight))) {
             wallPoly = actor->wallPoly;
@@ -1261,7 +1261,7 @@ void Actor_UpdateBgCheckInfo(GlobalContext* globalCtx, Actor* actor, f32 wallChe
     sp64.x = actor->world.pos.x;
     sp64.z = actor->world.pos.z;
 
-    if (flags & 2) {
+    if (flags & UPDBGCHECKINFO_FLAG_1) {
         sp64.y = actor->prevPos.y + 10.0f;
         if (BgCheck_EntityCheckCeiling(&globalCtx->colCtx, &sp58, &sp64, (ceilingCheckHeight + sp74) - 10.0f,
                                        &sCurCeilingPoly, &sCurCeilingBgId, actor)) {
@@ -1272,7 +1272,7 @@ void Actor_UpdateBgCheckInfo(GlobalContext* globalCtx, Actor* actor, f32 wallChe
         }
     }
 
-    if (flags & 4) {
+    if (flags & UPDBGCHECKINFO_FLAG_2) {
         sp64.y = actor->prevPos.y;
         func_8002E2AC(globalCtx, actor, &sp64, flags);
         waterBoxYSurface = actor->world.pos.y;
@@ -1284,7 +1284,7 @@ void Actor_UpdateBgCheckInfo(GlobalContext* globalCtx, Actor* actor, f32 wallChe
             } else {
                 if (!(actor->bgCheckFlags & BGCHECKFLAG_WATER)) {
                     actor->bgCheckFlags |= BGCHECKFLAG_WATER_TOUCH;
-                    if (!(flags & 0x40)) {
+                    if (!(flags & UPDBGCHECKINFO_FLAG_6)) {
                         ripplePos.x = actor->world.pos.x;
                         ripplePos.y = waterBoxYSurface;
                         ripplePos.z = actor->world.pos.z;
@@ -1319,7 +1319,7 @@ Gfx* func_8002E830(Vec3f* object, Vec3f* eye, Vec3f* lightDir, GraphicsContext* 
                      eye->x, eye->y, eye->z, object->x, object->y, object->z, lightDir->x, lightDir->y, lightDir->z);
     }
 
-    func_800ABE74(correctedEyeX, eye->y, eye->z);
+    View_ErrorCheckEyePosition(correctedEyeX, eye->y, eye->z);
     guLookAtHilite(&D_8015BBA8, lookAt, *hilite, correctedEyeX, eye->y, eye->z, object->x, object->y, object->z, 0.0f,
                    1.0f, 0.0f, lightDir->x, lightDir->y, lightDir->z, lightDir->x, lightDir->y, lightDir->z, 0x10,
                    0x10);
@@ -1921,13 +1921,13 @@ void Actor_DrawFaroresWindPointer(GlobalContext* globalCtx) {
             gDPSetPrimColor(POLY_XLU_DISP++, 128, 128, 255, 255, 200, alpha);
             gDPSetEnvColor(POLY_XLU_DISP++, 100, 200, 0, 255);
 
-            Matrix_RotateZ(((globalCtx->gameplayFrames * 1500) & 0xFFFF) * M_PI / 32768.0f, MTXMODE_APPLY);
+            Matrix_RotateZ(BINANG_TO_RAD_ALT2((globalCtx->gameplayFrames * 1500) & 0xFFFF), MTXMODE_APPLY);
             gSPMatrix(POLY_XLU_DISP++, Matrix_NewMtx(globalCtx->state.gfxCtx, "../z_actor.c", 5458),
                       G_MTX_MODELVIEW | G_MTX_LOAD | G_MTX_NOPUSH);
             gSPDisplayList(POLY_XLU_DISP++, gEffFlash1DL);
 
             Matrix_Pop();
-            Matrix_RotateZ(~((globalCtx->gameplayFrames * 1200) & 0xFFFF) * M_PI / 32768.0f, MTXMODE_APPLY);
+            Matrix_RotateZ(BINANG_TO_RAD_ALT2(~((globalCtx->gameplayFrames * 1200) & 0xFFFF)), MTXMODE_APPLY);
 
             gSPMatrix(POLY_XLU_DISP++, Matrix_NewMtx(globalCtx->state.gfxCtx, "../z_actor.c", 5463),
                       G_MTX_MODELVIEW | G_MTX_LOAD | G_MTX_NOPUSH);
@@ -3416,7 +3416,7 @@ s16 Actor_TestFloorInDirection(Actor* actor, GlobalContext* globalCtx, f32 dista
     actor->world.pos.x += dx;
     actor->world.pos.z += dz;
 
-    Actor_UpdateBgCheckInfo(globalCtx, actor, 0.0f, 0.0f, 0.0f, 4);
+    Actor_UpdateBgCheckInfo(globalCtx, actor, 0.0f, 0.0f, 0.0f, UPDBGCHECKINFO_FLAG_2);
 
     Math_Vec3f_Copy(&actor->world.pos, &prevActorPos);
 
@@ -3953,8 +3953,9 @@ s32 func_80035124(Actor* actor, GlobalContext* globalCtx) {
             break;
     }
 
-    Actor_UpdateBgCheckInfo(globalCtx, actor, actor->colChkInfo.cylHeight, actor->colChkInfo.cylRadius,
-                            actor->colChkInfo.cylRadius, 0x1D);
+    Actor_UpdateBgCheckInfo(
+        globalCtx, actor, actor->colChkInfo.cylHeight, actor->colChkInfo.cylRadius, actor->colChkInfo.cylRadius,
+        UPDBGCHECKINFO_FLAG_0 | UPDBGCHECKINFO_FLAG_2 | UPDBGCHECKINFO_FLAG_3 | UPDBGCHECKINFO_FLAG_4);
 
     return ret;
 }
@@ -3998,7 +3999,8 @@ s32 func_800354B4(GlobalContext* globalCtx, Actor* actor, f32 range, s16 arg3, s
     var1 = (s16)(actor->yawTowardsPlayer + 0x8000) - player->actor.shape.rot.y;
     var2 = actor->yawTowardsPlayer - arg5;
 
-    if ((actor->xzDistToPlayer <= range) && (player->swordState != 0) && (arg4 >= ABS(var1)) && (arg3 >= ABS(var2))) {
+    if ((actor->xzDistToPlayer <= range) && (player->meleeWeaponState != 0) && (arg4 >= ABS(var1)) &&
+        (arg3 >= ABS(var2))) {
         return true;
     } else {
         return false;
@@ -4038,7 +4040,8 @@ void func_800355B8(GlobalContext* globalCtx, Vec3f* pos) {
 u8 func_800355E4(GlobalContext* globalCtx, Collider* collider) {
     Player* player = GET_PLAYER(globalCtx);
 
-    if ((collider->acFlags & AC_TYPE_PLAYER) && (player->swordState != 0) && (player->swordAnimation == 0x16)) {
+    if ((collider->acFlags & AC_TYPE_PLAYER) && (player->meleeWeaponState != 0) &&
+        (player->meleeWeaponAnimation == PLAYER_MWA_HAMMER_FORWARD)) {
         return true;
     } else {
         return false;
@@ -4155,9 +4158,9 @@ Actor* func_800358DC(Actor* actor, Vec3f* spawnPos, Vec3s* spawnRot, f32* arg3, 
 }
 
 void func_800359B8(Actor* actor, s16 arg1, Vec3s* arg2) {
-    f32 sp44;
-    f32 sp40;
-    f32 sp3C;
+    f32 floorPolyNormalX;
+    f32 floorPolyNormalY;
+    f32 floorPolyNormalZ;
     f32 sp38;
     f32 sp34;
     f32 sp30;
@@ -4169,19 +4172,19 @@ void func_800359B8(Actor* actor, s16 arg1, Vec3s* arg2) {
 
     if (actor->floorPoly != NULL) {
         floorPoly = actor->floorPoly;
-        sp44 = COLPOLY_GET_NORMAL(floorPoly->normal.x);
-        sp40 = COLPOLY_GET_NORMAL(floorPoly->normal.y);
-        sp3C = COLPOLY_GET_NORMAL(floorPoly->normal.z);
+        floorPolyNormalX = COLPOLY_GET_NORMAL(floorPoly->normal.x);
+        floorPolyNormalY = COLPOLY_GET_NORMAL(floorPoly->normal.y);
+        floorPolyNormalZ = COLPOLY_GET_NORMAL(floorPoly->normal.z);
 
         sp38 = Math_SinS(arg1);
         sp34 = Math_CosS(arg1);
-        sp28 = (-(sp44 * sp38) - (sp3C * sp34));
-        arg2->x = -(s16)(Math_FAtan2F(sp28 * sp40, 1.0f) * (32768 / M_PI));
+        sp28 = (-(floorPolyNormalX * sp38) - (floorPolyNormalZ * sp34));
+        arg2->x = -RADF_TO_BINANG(Math_FAtan2F(sp28 * floorPolyNormalY, 1.0f));
 
         sp2C = Math_SinS(arg1 - 16375);
         sp30 = Math_CosS(arg1 - 16375);
-        sp24 = (-(sp44 * sp2C) - (sp3C * sp30));
-        arg2->z = -(s16)(Math_FAtan2F(sp24 * sp40, 1.0f) * (32768 / M_PI));
+        sp24 = (-(floorPolyNormalX * sp2C) - (floorPolyNormalZ * sp30));
+        arg2->z = -RADF_TO_BINANG(Math_FAtan2F(sp24 * floorPolyNormalY, 1.0f));
     }
 }
 

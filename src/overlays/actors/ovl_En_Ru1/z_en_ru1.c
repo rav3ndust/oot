@@ -233,7 +233,8 @@ void func_80AEAECC(EnRu1* this, GlobalContext* globalCtx) {
     f32 velocityYHeld = *velocityY;
 
     *velocityY = -4.0f;
-    Actor_UpdateBgCheckInfo(globalCtx, &this->actor, 19.0f, 25.0f, 30.0f, 7);
+    Actor_UpdateBgCheckInfo(globalCtx, &this->actor, 19.0f, 25.0f, 30.0f,
+                            UPDBGCHECKINFO_FLAG_0 | UPDBGCHECKINFO_FLAG_1 | UPDBGCHECKINFO_FLAG_2);
     *velocityY = velocityYHeld;
 }
 
@@ -356,7 +357,7 @@ void func_80AEB220(EnRu1* this, GlobalContext* globalCtx) {
     }
 }
 
-void func_80AEB264(EnRu1* this, AnimationHeader* animation, u8 arg2, f32 transitionRate, s32 arg4) {
+void func_80AEB264(EnRu1* this, AnimationHeader* animation, u8 arg2, f32 morphFrames, s32 arg4) {
     s32 pad[2];
     AnimationHeader* animHeader = SEGMENTED_TO_VIRTUAL(animation);
     f32 frameCount = Animation_GetLastFrame(animHeader);
@@ -374,7 +375,7 @@ void func_80AEB264(EnRu1* this, AnimationHeader* animation, u8 arg2, f32 transit
         playbackSpeed = -1.0f;
     }
 
-    Animation_Change(&this->skelAnime, animHeader, playbackSpeed, unk0, fc, arg2, transitionRate);
+    Animation_Change(&this->skelAnime, animHeader, playbackSpeed, unk0, fc, arg2, morphFrames);
 }
 
 s32 EnRu1_UpdateSkelAnime(EnRu1* this) {
@@ -1057,7 +1058,7 @@ s32 func_80AECF6C(EnRu1* this, GlobalContext* globalCtx) {
         shapeRotY = &player->actor.shape.rot.y;
         temp1 = this->actor.world.pos.x - player->actor.world.pos.x;
         temp2 = this->actor.world.pos.z - player->actor.world.pos.z;
-        temp_f16 = Math_FAtan2F(temp1, temp2) * (0x8000 / M_PI);
+        temp_f16 = RADF_TO_BINANG(Math_FAtan2F(temp1, temp2));
         if (*shapeRotY != temp_f16) {
             Math_SmoothStepToS(shapeRotY, temp_f16, 0x14, 0x1838, 0x64);
             player->actor.world.rot.y = *shapeRotY;

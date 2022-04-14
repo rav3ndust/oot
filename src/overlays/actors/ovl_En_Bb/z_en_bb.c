@@ -1239,7 +1239,8 @@ void EnBb_Update(Actor* thisx, GlobalContext* globalCtx2) {
             if ((this->actor.world.pos.y - 20.0f) <= this->actor.floorHeight) {
                 sp34 = 20.0f;
             }
-            Actor_UpdateBgCheckInfo(globalCtx, &this->actor, sp34, 25.0f, 20.0f, 5);
+            Actor_UpdateBgCheckInfo(globalCtx, &this->actor, sp34, 25.0f, 20.0f,
+                                    UPDBGCHECKINFO_FLAG_0 | UPDBGCHECKINFO_FLAG_2);
         }
         this->actor.focus.pos = this->actor.world.pos;
         this->collider.elements->dim.worldSphere.center.x = this->actor.world.pos.x;
@@ -1329,9 +1330,9 @@ void EnBb_Draw(Actor* thisx, GlobalContext* globalCtx) {
                                         0x20, 0x80));
             gDPSetPrimColor(POLY_XLU_DISP++, 0x80, 0x80, 255, 255, this->flamePrimBlue, this->flamePrimAlpha);
             gDPSetEnvColor(POLY_XLU_DISP++, this->flameEnvColor.r, this->flameEnvColor.g, this->flameEnvColor.b, 0);
-            Matrix_RotateY(((s16)(Camera_GetCamDirYaw(GET_ACTIVE_CAM(globalCtx)) - this->actor.shape.rot.y + 0x8000)) *
-                               (M_PI / 0x8000),
-                           MTXMODE_APPLY);
+            Matrix_RotateY(
+                BINANG_TO_RAD((s16)(Camera_GetCamDirYaw(GET_ACTIVE_CAM(globalCtx)) - this->actor.shape.rot.y + 0x8000)),
+                MTXMODE_APPLY);
             Matrix_Scale(this->flameScaleX * 0.01f, this->flameScaleY * 0.01f, 1.0f, MTXMODE_APPLY);
             gSPMatrix(POLY_XLU_DISP++, Matrix_NewMtx(globalCtx->state.gfxCtx, "../z_en_bb.c", 2106),
                       G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);

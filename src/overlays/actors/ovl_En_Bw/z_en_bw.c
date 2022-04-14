@@ -227,7 +227,7 @@ void func_809CEA24(EnBw* this, GlobalContext* globalCtx) {
         (this->unk_222 == 0)) {
         if (sp74 != NULL) {
             sp74 = SEGMENTED_TO_VIRTUAL(sp74);
-            sp62 = Math_FAtan2F(sp74->normal.x, sp74->normal.z) * ((f32)0x8000 / M_PI);
+            sp62 = RADF_TO_BINANG(Math_FAtan2F(sp74->normal.x, sp74->normal.z));
         } else {
             sp62 = this->actor.world.rot.y + 0x8000;
         }
@@ -305,7 +305,7 @@ void func_809CEA24(EnBw* this, GlobalContext* globalCtx) {
                                         &sp74, 1, 0, 0, 1);
             if (sp64 != 0) {
                 sp74 = SEGMENTED_TO_VIRTUAL(sp74);
-                sp60 = Math_FAtan2F(sp74->normal.x, sp74->normal.z) * ((f32)0x8000 / M_PI);
+                sp60 = RADF_TO_BINANG(Math_FAtan2F(sp74->normal.x, sp74->normal.z));
                 if (this->unk_236 != sp60) {
                     if ((s16)(this->actor.yawTowardsPlayer - sp60) >= 0) {
                         this->unk_238 = 0x4000;
@@ -792,7 +792,9 @@ void EnBw_Update(Actor* thisx, GlobalContext* globalCtx2) {
             (this->unk_234 != 0)) {
             Actor_MoveForward(thisx);
         }
-        Actor_UpdateBgCheckInfo(globalCtx, thisx, 20.0f, 30.0f, 21.0f, 0x1F);
+        Actor_UpdateBgCheckInfo(globalCtx, thisx, 20.0f, 30.0f, 21.0f,
+                                UPDBGCHECKINFO_FLAG_0 | UPDBGCHECKINFO_FLAG_1 | UPDBGCHECKINFO_FLAG_2 |
+                                    UPDBGCHECKINFO_FLAG_3 | UPDBGCHECKINFO_FLAG_4);
     }
     Collider_UpdateCylinder(thisx, &this->collider2);
     CollisionCheck_SetOC(globalCtx, &globalCtx->colChkCtx, &this->collider2.base);

@@ -1026,8 +1026,8 @@ void BossGoma_Defeated(BossGoma* this, GlobalContext* globalCtx) {
 
         for (i = 0; i < 4; i++) {
             //! @bug this 0-indexes into this->defeatedLimbPositions which is initialized with
-            // this->defeatedLimbPositions[limb], but limb is 1-indexed in skelanime callbacks, this means effects
-            // should spawn at this->defeatedLimbPositions[0] too, which is uninitialized, so map origin?
+            //! this->defeatedLimbPositions[limb], but limb is 1-indexed in skelanime callbacks, this means effects
+            //! should spawn at this->defeatedLimbPositions[0] too, which is uninitialized, so map origin?
             j = (s16)(Rand_ZeroOne() * (BOSSGOMA_LIMB_MAX - 1));
             if (this->defeatedLimbPositions[j].y < 10000.0f) {
                 pos.x = Rand_CenteredFloat(20.0f) + this->defeatedLimbPositions[j].x;
@@ -1083,8 +1083,8 @@ void BossGoma_Defeated(BossGoma* this, GlobalContext* globalCtx) {
 
                 for (i = 0; i < 4; i++) {
                     BossGoma_ClearPixels(sClearPixelTableFirstPass, this->decayingProgress);
-                    //! @bug this allows this->decayingProgress = 0x100 = 256 which is out of bounds when accessing
-                    // sClearPixelTableFirstPass, though timers may prevent this from ever happening?
+                    //! @bug this allows this->decayingProgress = 0x100 = 256 which
+                    //! is out of bounds when accessing sClearPixelTableFirstPass
                     if (this->decayingProgress < 0x100) {
                         this->decayingProgress++;
                     }
@@ -1928,9 +1928,10 @@ void BossGoma_Update(Actor* thisx, GlobalContext* globalCtx) {
     }
 
     if (this->actor.world.pos.y < -400.0f) {
-        Actor_UpdateBgCheckInfo(globalCtx, &this->actor, 30.0f, 30.0f, 80.0f, 5);
+        Actor_UpdateBgCheckInfo(globalCtx, &this->actor, 30.0f, 30.0f, 80.0f,
+                                UPDBGCHECKINFO_FLAG_0 | UPDBGCHECKINFO_FLAG_2);
     } else {
-        Actor_UpdateBgCheckInfo(globalCtx, &this->actor, 0.0f, 30.0f, 80.0f, 1);
+        Actor_UpdateBgCheckInfo(globalCtx, &this->actor, 0.0f, 30.0f, 80.0f, UPDBGCHECKINFO_FLAG_0);
     }
 
     BossGoma_UpdateEye(this, globalCtx);
@@ -2084,7 +2085,7 @@ void BossGoma_PostLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList,
                                                 childPos.x, childPos.y, childPos.z, childRot.x, childRot.y, childRot.z,
                                                 sDeadLimbLifetime[limbIndex] + 100);
         if (babyGohma != NULL) {
-            babyGohma->bossLimbDl = *dList;
+            babyGohma->bossLimbDL = *dList;
             babyGohma->actor.objBankIndex = this->actor.objBankIndex;
         }
     }
