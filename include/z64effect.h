@@ -4,7 +4,7 @@
 #include "color.h"
 
 struct GraphicsContext;
-struct GlobalContext;
+struct PlayState;
 
 /* Effects */
 
@@ -97,10 +97,10 @@ typedef struct {
     /* 0x188 */ u16 flags;
     /* 0x18A */ s16 addAngleChange;
     /* 0x18C */ s16 addAngle;
-    /* 0x18E */ Color_RGBA8 p1StartColor;
-    /* 0x192 */ Color_RGBA8 p2StartColor;
-    /* 0x196 */ Color_RGBA8 p1EndColor;
-    /* 0x19A */ Color_RGBA8 p2EndColor;
+    /* 0x18E */ u8 p1StartColor[4];
+    /* 0x192 */ u8 p2StartColor[4];
+    /* 0x196 */ u8 p1EndColor[4];
+    /* 0x19A */ u8 p2EndColor[4];
     /* 0x19E */ u8 numElements; // "now_edge_num"
     /* 0x19F */ u8 elemDuration;
     /* 0x1A0 */ u8 unkFlag;
@@ -158,7 +158,7 @@ typedef struct {
 } EffectShieldParticle; // size = 0x1C8
 
 typedef struct {
-    /* 0x0000 */ struct GlobalContext* globalCtx;
+    /* 0x0000 */ struct PlayState* play;
     struct {
         EffectStatus status;
         EffectSpark effect;
@@ -192,9 +192,9 @@ typedef enum {
 
 struct EffectSs;
 
-typedef u32 (*EffectSsInitFunc)(struct GlobalContext* globalCtx, u32 index, struct EffectSs* effectSs, void* initParams);
-typedef void (*EffectSsUpdateFunc)(struct GlobalContext* globalCtx, u32 index, struct EffectSs* effectSs);
-typedef void (*EffectSsDrawFunc)(struct GlobalContext* globalCtx, u32 index, struct EffectSs* effectSs);
+typedef u32 (*EffectSsInitFunc)(struct PlayState* play, u32 index, struct EffectSs* effectSs, void* initParams);
+typedef void (*EffectSsUpdateFunc)(struct PlayState* play, u32 index, struct EffectSs* effectSs);
+typedef void (*EffectSsDrawFunc)(struct PlayState* play, u32 index, struct EffectSs* effectSs);
 
 typedef struct {
     /* 0x00 */ u32 type;

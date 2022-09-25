@@ -1,6 +1,6 @@
 #include "z_boss_ganon2.h"
 #include "overlays/actors/ovl_En_Zl3/z_en_zl3.h"
-#include "objects/object_ganon2/object_ganon2.h"
+#include "assets/objects/object_ganon2/object_ganon2.h"
 
 #define BOSS_GANON2_EFFECT_COUNT 100
 
@@ -309,9 +309,9 @@ static s8 D_80907144[] = {
 static Vec3f D_80907164 = { 800.0f, 420.0f, 100.0f };
 
 static void* sEyeTextures[] = {
-    object_ganon2_Tex_01E188,
-    object_ganon2_Tex_01E988,
-    object_ganon2_Tex_01EA08,
+    gGanonEyeOpenTex,
+    gGanonEyeHalfTex,
+    gGanonEyeClosedTex,
 };
 
 static Vec3f D_8090717C = { 0.0f, -2000.0f, 0.0f };
@@ -331,7 +331,7 @@ static u8 D_809071EC[] = { 3, 2, 2, 1, 3, 3, 1, 3, 3, 1, 0, 3, 1, 0, 3 };
 // padding
 static u32 D_809071FC[2] = { 0 };
 
-#include "overlays/ovl_Boss_Ganon2/ovl_Boss_Ganon2.c"
+#include "assets/overlays/ovl_Boss_Ganon2/ovl_Boss_Ganon2.c"
 
 static Vec3f D_8090EB20;
 

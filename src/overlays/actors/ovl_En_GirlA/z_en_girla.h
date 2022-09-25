@@ -6,10 +6,10 @@
 
 struct EnGirlA;
 
-typedef void (*EnGirlAActionFunc)(struct EnGirlA*, GlobalContext*);
-typedef void (*EnGirlA2Func)(GlobalContext*, struct EnGirlA*);
-typedef void (*EnGirlA3Func)(Actor*, GlobalContext*, s32);
-typedef s32 (*EnGirlA4Func)(GlobalContext*, struct EnGirlA*);
+typedef void (*EnGirlAActionFunc)(struct EnGirlA*, PlayState*);
+typedef void (*EnGirlA2Func)(PlayState*, struct EnGirlA*);
+typedef void (*EnGirlA3Func)(Actor*, PlayState*, s32);
+typedef s32 (*EnGirlA4Func)(PlayState*, struct EnGirlA*);
 
 typedef struct EnGirlA {
     /* 0x0000 */ Actor actor;
@@ -52,7 +52,7 @@ typedef enum {
     /* 0x0D */ SI_DEKU_SHIELD,
     /* 0x0E */ SI_GORON_TUNIC,
     /* 0x0F */ SI_ZORA_TUNIC,
-    /* 0x10 */ SI_HEART,
+    /* 0x10 */ SI_RECOVERY_HEART,
     /* 0x11 */ SI_MILK_BOTTLE,
     /* 0x12 */ SI_WEIRD_EGG,
     /* 0x13 */ SI_19,

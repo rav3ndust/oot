@@ -7,19 +7,20 @@
 #include "z64collision_check.h"
 
 #define ACTOR_NUMBER_MAX 200
+
 #define INVISIBLE_ACTOR_MAX 20
-#define AM_FIELD_SIZE 0x27A0
-#define MASS_IMMOVABLE 0xFF // Cannot be pushed by OC collisions
-#define MASS_HEAVY 0xFE // Can only be pushed by OC collisions with IMMOVABLE and HEAVY objects.
+
+#define MASS_IMMOVABLE 0xFF // Cannot be pushed by OC colliders
+#define MASS_HEAVY 0xFE // Can only be pushed by OC colliders from actors with IMMOVABLE or HEAVY mass.
 
 struct Actor;
-struct GlobalContext;
+struct PlayState;
 struct Lights;
 
-typedef void (*ActorFunc)(struct Actor*, struct GlobalContext*);
-typedef void (*ActorShadowFunc)(struct Actor*, struct Lights*, struct GlobalContext*);
-typedef u16 (*callback1_800343CC)(struct GlobalContext*, struct Actor*);
-typedef s16 (*callback2_800343CC)(struct GlobalContext*, struct Actor*);
+typedef void (*ActorFunc)(struct Actor*, struct PlayState*);
+typedef void (*ActorShadowFunc)(struct Actor*, struct Lights*, struct PlayState*);
+typedef u16 (*callback1_800343CC)(struct PlayState*, struct Actor*);
+typedef s16 (*callback2_800343CC)(struct PlayState*, struct Actor*);
 
 typedef struct {
     Vec3f pos;
@@ -38,11 +39,50 @@ typedef struct {
     /* 0x1C */ ActorFunc draw; // Draw function
 } ActorInit; // size = 0x20
 
-typedef enum {
-    /* 0 */ ALLOCTYPE_NORMAL,
-    /* 1 */ ALLOCTYPE_ABSOLUTE,
-    /* 2 */ ALLOCTYPE_PERMANENT
-} AllocType;
+/**
+ * @see ACTOROVL_ALLOC_ABSOLUTE
+ */
+#define ACTOROVL_ABSOLUTE_SPACE_SIZE 0x27A0
+
+/**
+ * The actor overlay should be allocated memory for when loading,
+ * and the memory deallocated when there is no more actor using the overlay.
+ *
+ * `ACTOROVL_ALLOC_` defines indicate how an actor overlay should be loaded.
+ *
+ * @note Bitwise or-ing `ACTOROVL_ALLOC_` types is not meaningful.
+ * The `ACTOROVL_ALLOC_` types are 0, 1, 2 but checked against with a bitwise and.
+ *
+ * @see ACTOROVL_ALLOC_ABSOLUTE
+ * @see ACTOROVL_ALLOC_PERSISTENT
+ * @see actor_table.h
+ */
+#define ACTOROVL_ALLOC_NORMAL 0
+
+/**
+ * The actor overlay should be loaded to "absolute space".
+ *
+ * Absolute space is a fixed amount of memory allocated once.
+ * The overlay will still need to be loaded again if at some point there is no more actor using the overlay.
+ *
+ * @note Only one such overlay may be loaded at a time.
+ * This is not checked: a newly loaded overlay will overwrite the previous one in absolute space,
+ * even if actors are still relying on the previous one. Actors using absolute-allocated overlays should be deleted
+ * when another absolute-allocated overlay is about to be used.
+ *
+ * @see ACTOROVL_ABSOLUTE_SPACE_SIZE
+ * @see ActorContext.absoluteSpace
+ * @see ACTOROVL_ALLOC_NORMAL
+ */
+#define ACTOROVL_ALLOC_ABSOLUTE (1 << 0)
+
+/**
+ * The actor overlay should be loaded persistently.
+ * It will stay loaded until the current game state instance ends.
+ *
+ * @see ACTOROVL_ALLOC_NORMAL
+ */
+#define ACTOROVL_ALLOC_PERSISTENT (1 << 1)
 
 typedef struct {
     /* 0x00 */ u32 vromStart;
@@ -52,7 +92,7 @@ typedef struct {
     /* 0x10 */ void* loadedRamAddr; // original name: "allocp"
     /* 0x14 */ ActorInit* initInfo;
     /* 0x18 */ char* name;
-    /* 0x1C */ u16 allocType;
+    /* 0x1C */ u16 allocType; // See `ACTOROVL_ALLOC_` defines
     /* 0x1E */ s8 numLoaded; // original name: "clients"
 } ActorOverlay; // size = 0x20
 
@@ -96,7 +136,7 @@ typedef struct {
     /* 0x0C */ ActorShadowFunc shadowDraw; // Shadow draw function
     /* 0x10 */ f32 shadowScale; // Changes the size of the shadow
     /* 0x14 */ u8 shadowAlpha; // Default is 255
-    /* 0x15 */ u8 feetFloorFlags; // Set if the actor's foot is clipped under the floor. & 1 is right foot, & 2 is left
+    /* 0x15 */ u8 feetFloorFlag; // 0 if actor or feet aren't on ground, or 1 or 2 depending on feet positions
     /* 0x18 */ Vec3f feetPos[2]; // Update by using `Actor_SetFeetPos` in PostLimbDraw
 } ActorShape; // size = 0x30
 
@@ -149,7 +189,7 @@ typedef struct Actor {
     /* 0x01C */ s16 params; // Configurable variable set by the actor's spawn data; original name: "args_data"
     /* 0x01E */ s8 objBankIndex; // Object bank index of the actor's object dependency; original name: "bank"
     /* 0x01F */ s8 targetMode; // Controls how far the actor can be targeted from and how far it can stay locked on
-    /* 0x020 */ u16 sfx; // SFX ID to play. Sound plays when value is set, then is cleared the following update cycle
+    /* 0x020 */ u16 sfx; // SFX ID to play. Sfx plays when value is set, then is cleared the following update cycle
     /* 0x024 */ PosRot world; // Position/rotation in the world
     /* 0x038 */ PosRot focus; // Target reticle focuses on this position. For player this represents head pos and rot
     /* 0x04C */ f32 targetArrowOffset; // Height offset of the target arrow relative to `focus` position
@@ -180,7 +220,7 @@ typedef struct Actor {
     /* 0x100 */ Vec3f prevPos; // World position from the previous update cycle
     /* 0x10C */ u8 isTargeted; // Set to true if the actor is currently being targeted by the player
     /* 0x10D */ u8 targetPriority; // Lower values have higher priority. Resets to 0 when player stops targeting
-    /* 0x10E */ u16 textId; // Text ID to pass to link/display when interacting with the actor
+    /* 0x10E */ u16 textId; // Text ID to pass to player/display when interacting with the actor
     /* 0x110 */ u16 freezeTimer; // Actor does not update when set. Timer decrements automatically
     /* 0x112 */ u16 colorFilterParams; // Set color filter to red, blue, or white. Toggle opa or xlu
     /* 0x114 */ u8 colorFilterTimer; // A non-zero value enables the color filter. Decrements automatically
@@ -214,6 +254,11 @@ if neither of the above are set : blue
 0x2000 : translucent, else opaque
 */
 
+#define DYNA_INTERACT_ACTOR_ON_TOP (1 << 0) // There is an actor standing on the collision of the dynapoly actor
+#define DYNA_INTERACT_PLAYER_ON_TOP (1 << 1) // The player actor is standing on the collision of the dynapoly actor
+#define DYNA_INTERACT_PLAYER_ABOVE (1 << 2) // The player is directly above the collision of the dynapoly actor (any distance above)
+#define DYNA_INTERACT_3 (1 << 3) // Like the ACTOR_ON_TOP flag but only actors with ACTOR_FLAG_26
+
 typedef struct DynaPolyActor {
     /* 0x000 */ struct Actor actor;
     /* 0x14C */ s32 bgId;
@@ -222,7 +267,7 @@ typedef struct DynaPolyActor {
     /* 0x158 */ s16 unk_158; // y rotation?
     /* 0x15A */ u16 unk_15A;
     /* 0x15C */ u32 unk_15C;
-    /* 0x160 */ u8 unk_160;
+    /* 0x160 */ u8 interactFlags;
     /* 0x162 */ s16 unk_162;
 } DynaPolyActor; // size = 0x164
 
@@ -243,7 +288,7 @@ typedef enum {
     /* 0x00 */ ITEM00_RUPEE_GREEN,
     /* 0x01 */ ITEM00_RUPEE_BLUE,
     /* 0x02 */ ITEM00_RUPEE_RED,
-    /* 0x03 */ ITEM00_HEART,
+    /* 0x03 */ ITEM00_RECOVERY_HEART,
     /* 0x04 */ ITEM00_BOMBS_A,
     /* 0x05 */ ITEM00_ARROWS_SINGLE,
     /* 0x06 */ ITEM00_HEART_PIECE,
@@ -266,12 +311,13 @@ typedef enum {
     /* 0x17 */ ITEM00_TUNIC_ZORA,
     /* 0x18 */ ITEM00_TUNIC_GORON,
     /* 0x19 */ ITEM00_BOMBS_SPECIAL,
+    /* 0x1A */ ITEM00_MAX,
     /* 0xFF */ ITEM00_NONE = 0xFF
 } Item00Type;
 
 struct EnItem00;
 
-typedef void (*EnItem00ActionFunc)(struct EnItem00*, struct GlobalContext*);
+typedef void (*EnItem00ActionFunc)(struct EnItem00*, struct PlayState*);
 
 typedef struct EnItem00 {
     /* 0x000 */ Actor actor;
@@ -281,7 +327,7 @@ typedef struct EnItem00 {
     /* 0x154 */ s16 unk_154;
     /* 0x156 */ s16 unk_156;
     /* 0x158 */ s16 unk_158;
-    /* 0x15A */ s16 unk_15A;
+    /* 0x15A */ s16 despawnTimer;
     /* 0x15C */ f32 scale;
     /* 0x160 */ ColliderCylinder collider;
 } EnItem00; // size = 0x1AC
@@ -305,7 +351,7 @@ typedef enum {
 
 struct EnAObj;
 
-typedef void (*EnAObjActionFunc)(struct EnAObj*, struct GlobalContext*);
+typedef void (*EnAObjActionFunc)(struct EnAObj*, struct PlayState*);
 
 typedef struct EnAObj {
     /* 0x000 */ DynaPolyActor dyna;
@@ -336,8 +382,8 @@ typedef enum {
     /* 0x0C */ ACTORCAT_MAX
 } ActorCategory;
 
-#define DEFINE_ACTOR(_0, enum, _2) enum,
-#define DEFINE_ACTOR_INTERNAL(_0, enum, _2) enum,
+#define DEFINE_ACTOR(_0, enum, _2, _3) enum,
+#define DEFINE_ACTOR_INTERNAL(_0, enum, _2, _3) enum,
 #define DEFINE_ACTOR_UNSET(enum) enum,
 
 typedef enum {
@@ -354,6 +400,126 @@ typedef enum {
     DOORLOCK_BOSS,
     DOORLOCK_NORMAL_SPIRIT
 } DoorLockType;
+
+typedef enum {
+    /* 0x00 */ NAVI_ENEMY_DEFAULT,
+    /* 0x01 */ NAVI_ENEMY_GOHMA,
+    /* 0x02 */ NAVI_ENEMY_GOHMA_EGG,
+    /* 0x03 */ NAVI_ENEMY_GOHMA_LARVA,
+    /* 0x04 */ NAVI_ENEMY_SKULLTULA,
+    /* 0x05 */ NAVI_ENEMY_BIG_SKULLTULA,
+    /* 0x06 */ NAVI_ENEMY_TAILPASARAN,
+    /* 0x07 */ NAVI_ENEMY_DEKU_BABA,
+    /* 0x08 */ NAVI_ENEMY_BIG_DEKU_BABA,
+    /* 0x09 */ NAVI_ENEMY_WITHERED_DEKU_BABA,
+    /* 0x0A */ NAVI_ENEMY_DEKU_SCRUB,
+    /* 0x0B */ NAVI_ENEMY_UNUSED_B,
+    /* 0x0C */ NAVI_ENEMY_KING_DODONGO,
+    /* 0x0D */ NAVI_ENEMY_DODONGO,
+    /* 0x0E */ NAVI_ENEMY_BABY_DODONGO,
+    /* 0x0F */ NAVI_ENEMY_LIZALFOS,
+    /* 0x10 */ NAVI_ENEMY_DINOLFOS,
+    /* 0x11 */ NAVI_ENEMY_FIRE_KEESE,
+    /* 0x12 */ NAVI_ENEMY_KEESE,
+    /* 0x13 */ NAVI_ENEMY_ARMOS,
+    /* 0x14 */ NAVI_ENEMY_BARINADE,
+    /* 0x15 */ NAVI_ENEMY_PARASITIC_TENTACLE,
+    /* 0x16 */ NAVI_ENEMY_SHABOM,
+    /* 0x17 */ NAVI_ENEMY_BIRI,
+    /* 0x18 */ NAVI_ENEMY_BARI,
+    /* 0x19 */ NAVI_ENEMY_STINGER,
+    /* 0x1A */ NAVI_ENEMY_PHANTOM_GANON_PHASE_2,
+    /* 0x1B */ NAVI_ENEMY_STALFOS,
+    /* 0x1C */ NAVI_ENEMY_BLUE_BUBBLE,
+    /* 0x1D */ NAVI_ENEMY_WHITE_BUBBLE,
+    /* 0x1E */ NAVI_ENEMY_GREEN_BUBBLE,
+    /* 0x1F */ NAVI_ENEMY_SKULLWALLTULA,
+    /* 0x20 */ NAVI_ENEMY_GOLD_SKULLTULA,
+    /* 0x21 */ NAVI_ENEMY_VOLVAGIA,
+    /* 0x22 */ NAVI_ENEMY_FLARE_DANCER,
+    /* 0x23 */ NAVI_ENEMY_TORCH_SLUG,
+    /* 0x24 */ NAVI_ENEMY_RED_BUBBLE,
+    /* 0x25 */ NAVI_ENEMY_MORPHA,
+    /* 0x26 */ NAVI_ENEMY_DARK_LINK,
+    /* 0x27 */ NAVI_ENEMY_SHELL_BLADE,
+    /* 0x28 */ NAVI_ENEMY_SPIKE,
+    /* 0x29 */ NAVI_ENEMY_BONGO_BONGO,
+    /* 0x2A */ NAVI_ENEMY_REDEAD,
+    /* 0x2B */ NAVI_ENEMY_PHANTOM_GANON_PHASE_1,
+    /* 0x2C */ NAVI_ENEMY_UNUSED_2C,
+    /* 0x2D */ NAVI_ENEMY_GIBDO,
+    /* 0x2E */ NAVI_ENEMY_DEAD_HANDS_HAND,
+    /* 0x2F */ NAVI_ENEMY_DEAD_HAND,
+    /* 0x30 */ NAVI_ENEMY_WALLMASTER,
+    /* 0x31 */ NAVI_ENEMY_FLOORMASTER,
+    /* 0x32 */ NAVI_ENEMY_TWINROVA_KOUME,
+    /* 0x33 */ NAVI_ENEMY_TWINROVA_KOTAKE,
+    /* 0x34 */ NAVI_ENEMY_IRON_KNUCKLE_NABOORU,
+    /* 0x35 */ NAVI_ENEMY_IRON_KNUCKLE,
+    /* 0x36 */ NAVI_ENEMY_SKULL_KID_ADULT,
+    /* 0x37 */ NAVI_ENEMY_LIKE_LIKE,
+    /* 0x38 */ NAVI_ENEMY_UNUSED_38,
+    /* 0x39 */ NAVI_ENEMY_BEAMOS,
+    /* 0x3A */ NAVI_ENEMY_ANUBIS,
+    /* 0x3B */ NAVI_ENEMY_FREEZARD,
+    /* 0x3C */ NAVI_ENEMY_UNUSED_3C,
+    /* 0x3D */ NAVI_ENEMY_GANONDORF,
+    /* 0x3E */ NAVI_ENEMY_GANON,
+    /* 0x3F */ NAVI_ENEMY_SKULL_KID,
+    /* 0x40 */ NAVI_ENEMY_SKULL_KID_FRIENDLY,
+    /* 0x41 */ NAVI_ENEMY_SKULL_KID_MASK,
+    /* 0x42 */ NAVI_ENEMY_OCTOROK,
+    /* 0x43 */ NAVI_ENEMY_POE_COMPOSER,
+    /* 0x44 */ NAVI_ENEMY_POE,
+    /* 0x45 */ NAVI_ENEMY_RED_TEKTITE,
+    /* 0x46 */ NAVI_ENEMY_BLUE_TEKTITE,
+    /* 0x47 */ NAVI_ENEMY_LEEVER,
+    /* 0x48 */ NAVI_ENEMY_PEAHAT,
+    /* 0x49 */ NAVI_ENEMY_PEAHAT_LARVA,
+    /* 0x4A */ NAVI_ENEMY_MOBLIN,
+    /* 0x4B */ NAVI_ENEMY_MOBLIN_CLUB,
+    /* 0x4C */ NAVI_ENEMY_WOLFOS,
+    /* 0x4D */ NAVI_ENEMY_MAD_SCRUB,
+    /* 0x4E */ NAVI_ENEMY_BUSINESS_SCRUB,
+    /* 0x4F */ NAVI_ENEMY_DAMPES_GHOST,
+    /* 0x50 */ NAVI_ENEMY_POE_SISTER_MEG,
+    /* 0x51 */ NAVI_ENEMY_POE_SISTER_JOELLE,
+    /* 0x52 */ NAVI_ENEMY_POE_SISTER_BETH,
+    /* 0x53 */ NAVI_ENEMY_POE_SISTER_AMY,
+    /* 0x54 */ NAVI_ENEMY_GERUDO_THIEF,
+    /* 0x55 */ NAVI_ENEMY_STALCHILD,
+    /* 0x56 */ NAVI_ENEMY_ICE_KEESE,
+    /* 0x57 */ NAVI_ENEMY_WHITE_WOLFOS,
+    /* 0x58 */ NAVI_ENEMY_GUAY,
+    /* 0x59 */ NAVI_ENEMY_BIGOCTO,
+    /* 0x5A */ NAVI_ENEMY_BIG_POE,
+    /* 0x5B */ NAVI_ENEMY_TWINROVA,
+    /* 0x5C */ NAVI_ENEMY_POE_WASTELAND,
+    /* 0xFF */ NAVI_ENEMY_NONE = 0xFF
+} NaviEnemy;
+
+#define TRANSITION_ACTOR_PARAMS_INDEX_SHIFT 10
+#define GET_TRANSITION_ACTOR_INDEX(actor) ((u16)(actor)->params >> TRANSITION_ACTOR_PARAMS_INDEX_SHIFT)
+
+// EnDoor and DoorKiller share openAnim and playerIsOpening
+// Due to alignment, a substruct cannot be used in the structs of these actors.
+#define DOOR_ACTOR_BASE               \
+    /* 0x0000 */ Actor actor;         \
+    /* 0x014C */ SkelAnime skelAnime; \
+    /* 0x0190 */ u8 openAnim;         \
+    /* 0x0191 */ u8 playerIsOpening
+
+typedef struct DoorActorBase {
+    /* 0x0000 */ DOOR_ACTOR_BASE;
+} DoorActorBase;
+
+typedef enum {
+    /* 0x00 */ DOOR_OPEN_ANIM_ADULT_L,
+    /* 0x01 */ DOOR_OPEN_ANIM_CHILD_L,
+    /* 0x02 */ DOOR_OPEN_ANIM_ADULT_R,
+    /* 0x03 */ DOOR_OPEN_ANIM_CHILD_R,
+    /* 0x04 */ DOOR_OPEN_ANIM_MAX
+} DoorOpenAnim;
 
 #define UPDBGCHECKINFO_FLAG_0 (1 << 0) // check wall
 #define UPDBGCHECKINFO_FLAG_1 (1 << 1) // check ceiling

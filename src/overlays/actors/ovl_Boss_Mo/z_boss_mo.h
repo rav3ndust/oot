@@ -6,7 +6,7 @@
 
 struct BossMo;
 
-typedef void (*BossMoActionFunc)(struct BossMo*, GlobalContext*);
+typedef void (*BossMoActionFunc)(struct BossMo*, PlayState*);
 
 typedef enum {
     /* 0 */ MO_TENT_ACTION_STATE,
@@ -67,7 +67,7 @@ typedef struct BossMo {
     /* 0x0170 */ s16 zSwing;
     /* 0x0172 */ s16 cutIndex;
     /* 0x0174 */ s16 meltIndex;
-    /* 0x0176 */ s16 linkToLeft;
+    /* 0x0176 */ s16 playerToLeft;
     /* 0x0178 */ s16 mashCounter;
     /* 0x017A */ s16 noBubbles;
     /* 0x017C */ s16 sfxTimer;
@@ -87,7 +87,7 @@ typedef struct BossMo {
     /* 0x01CE */ s16 attackAngleMod;
     /* 0x01D0 */ u8 unk_1D0; // unused?
     /* 0x01D1 */ u8 drawActor;
-    /* 0x01D2 */ u8 linkHitTimer;
+    /* 0x01D2 */ u8 playerHitTimer;
     /* 0x01D4 */ Vec3f targetPos;
     /* 0x01E0 */ f32 tentRippleSize;
     /* 0x01E4 */ PosRot grabPosRot;
@@ -100,28 +100,28 @@ typedef struct BossMo {
     /* 0x0D68 */ f32 tentSpeed;
     /* 0x0D6C */ f32 tentPulse;
     /* 0x0D70 */ Vec3f tentPos[41];
-    /* 0x0F5C */ f32 cameraZoom;
+    /* 0x0F5C */ f32 subCamFov;
     /* 0x0F60 */ s16 csState;
-    /* 0x0F62 */ s16 csCamera;
+    /* 0x0F62 */ s16 subCamId;
     /* 0x0F64 */ s16 targetIndex;
-    /* 0x0F68 */ Vec3f cameraEye;
-    /* 0x0F74 */ Vec3f cameraAt;
-    /* 0x0F80 */ Vec3f cameraUp;
+    /* 0x0F68 */ Vec3f subCamEye;
+    /* 0x0F74 */ Vec3f subCamAt;
+    /* 0x0F80 */ Vec3f subCamUp;
     /* 0x0F8C */ char unk_F8C[0x18];
-    /* 0x0FA4 */ Vec3f cameraEyeVel;
-    /* 0x0FB0 */ Vec3f cameraAtVel;
-    /* 0x0FBC */ Vec3f cameraNextEye;
-    /* 0x0FC8 */ Vec3f cameraEyeMaxVel;
-    /* 0x0FD4 */ Vec3f cameraNextAt;
-    /* 0x0FE0 */ Vec3f cameraAtMaxVel;
-    /* 0x0FEC */ f32 cameraSpeedMod;
-    /* 0x0FF0 */ f32 cameraAccel;
+    /* 0x0FA4 */ Vec3f subCamEyeVel;
+    /* 0x0FB0 */ Vec3f subCamAtVel;
+    /* 0x0FBC */ Vec3f subCamEyeNext;
+    /* 0x0FC8 */ Vec3f subCamEyeMaxVelFrac;
+    /* 0x0FD4 */ Vec3f subCamAtNext;
+    /* 0x0FE0 */ Vec3f subCamAtMaxVelFrac;
+    /* 0x0FEC */ f32 subCamVelFactor;
+    /* 0x0FF0 */ f32 subCamAccel;
     /* 0x0FF4 */ char unk_FF4[8];
-    /* 0x0FFC */ f32 cameraDist;
-    /* 0x1000 */ f32 cameraSpeed;
-    /* 0x1004 */ f32 cameraYaw;
-    /* 0x1008 */ f32 cameraYawRate;
-    /* 0x100C */ f32 cameraYawShake;
+    /* 0x0FFC */ f32 subCamDist;
+    /* 0x1000 */ f32 subCamSpeed;
+    /* 0x1004 */ f32 subCamYaw;
+    /* 0x1008 */ f32 subCamYawRate;
+    /* 0x100C */ f32 subCamYawShake;
     /* 0x1010 */ Vec3f tentTipPos;
     /* 0x101C */ ColliderJntSph tentCollider;
     /* 0x103C */ ColliderJntSphElement tentElements[19];

@@ -1,4 +1,5 @@
 #include "global.h"
+#include "ultra64/asm.h"
 
 __OSThreadTail __osThreadTail = { NULL, OS_PRIORITY_THREADTAIL };
 OSThread* __osRunQueue = (OSThread*)&__osThreadTail;
@@ -15,9 +16,9 @@ void osCreateThread(OSThread* thread, OSId id, void (*entry)(void*), void* arg, 
     thread->next = NULL;
     thread->queue = NULL;
     thread->context.pc = (u32)entry;
-    thread->context.a0 = arg;
-    thread->context.sp = (u64)(s32)sp - 16;
-    thread->context.ra = __osCleanupThread;
+    thread->context.a0 = (u64)(s32)arg;
+    thread->context.sp = (u64)(s32)sp - FRAMESZ(SZREG * NARGSAVE);
+    thread->context.ra = (u64)(s32)__osCleanupThread;
 
     mask = OS_IM_ALL;
     thread->context.sr = (mask & OS_IM_CPU) | SR_EXL;

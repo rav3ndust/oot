@@ -1,13 +1,13 @@
 #include "global.h"
 
-void Sample_HandleStateChange(SampleContext* this) {
+void Sample_HandleStateChange(SampleState* this) {
     if (CHECK_BTN_ALL(this->state.input[0].press.button, BTN_START)) {
-        SET_NEXT_GAMESTATE(&this->state, Gameplay_Init, GlobalContext);
+        SET_NEXT_GAMESTATE(&this->state, Play_Init, PlayState);
         this->state.running = false;
     }
 }
 
-void Sample_Draw(SampleContext* this) {
+void Sample_Draw(SampleState* this) {
     GraphicsContext* gfxCtx = this->state.gfxCtx;
     View* view = &this->view;
 
@@ -16,7 +16,7 @@ void Sample_Draw(SampleContext* this) {
     gSPSegment(POLY_OPA_DISP++, 0x00, NULL);
     gSPSegment(POLY_OPA_DISP++, 0x01, this->staticSegment);
 
-    func_80095248(gfxCtx, 0, 0, 0);
+    Gfx_SetupFrame(gfxCtx, 0, 0, 0);
 
     view->flags = VIEW_VIEWING | VIEW_VIEWPORT | VIEW_PROJECTION_PERSPECTIVE;
     View_Apply(view, VIEW_ALL);
@@ -29,7 +29,7 @@ void Sample_Draw(SampleContext* this) {
     }
 
     POLY_OPA_DISP = Gfx_SetFog2(POLY_OPA_DISP, 255, 255, 255, 0, 0, 0);
-    func_80093D18(gfxCtx);
+    Gfx_SetupDL_25Opa(gfxCtx);
 
     gDPSetCycleType(POLY_OPA_DISP++, G_CYC_1CYCLE);
     gDPSetRenderMode(POLY_OPA_DISP++, G_RM_AA_ZB_OPA_SURF, G_RM_AA_ZB_OPA_SURF2);
@@ -40,7 +40,7 @@ void Sample_Draw(SampleContext* this) {
 }
 
 void Sample_Main(GameState* thisx) {
-    SampleContext* this = (SampleContext*)thisx;
+    SampleState* this = (SampleState*)thisx;
 
     Sample_Draw(this);
     Sample_HandleStateChange(this);
@@ -49,7 +49,7 @@ void Sample_Main(GameState* thisx) {
 void Sample_Destroy(GameState* thisx) {
 }
 
-void Sample_SetupView(SampleContext* this) {
+void Sample_SetupView(SampleState* this) {
     View* view = &this->view;
     GraphicsContext* gfxCtx = this->state.gfxCtx;
 
@@ -76,15 +76,15 @@ void Sample_SetupView(SampleContext* this) {
     }
 }
 
-void Sample_LoadTitleStatic(SampleContext* this) {
+void Sample_LoadTitleStatic(SampleState* this) {
     u32 size = _title_staticSegmentRomEnd - _title_staticSegmentRomStart;
 
     this->staticSegment = GameState_Alloc(&this->state, size, "../z_sample.c", 163);
-    DmaMgr_SendRequest1(this->staticSegment, _title_staticSegmentRomStart, size, "../z_sample.c", 164);
+    DmaMgr_SendRequest1(this->staticSegment, (u32)_title_staticSegmentRomStart, size, "../z_sample.c", 164);
 }
 
 void Sample_Init(GameState* thisx) {
-    SampleContext* this = (SampleContext*)thisx;
+    SampleState* this = (SampleState*)thisx;
 
     this->state.main = Sample_Main;
     this->state.destroy = Sample_Destroy;

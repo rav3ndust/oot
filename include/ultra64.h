@@ -7,6 +7,7 @@
 #include "libc/stdarg.h"
 #include "libc/stdbool.h"
 #include "libc/stddef.h"
+#include "libc/stdint.h"
 #include "libc/stdlib.h"
 #include "libc/math.h"
 
@@ -28,5 +29,6 @@
 #include "ultra64/pfs.h"
 #include "ultra64/motor.h"
 #include "ultra64/r4300.h"
+#include "ultra64/ucode.h"
 
 #endif

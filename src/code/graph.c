@@ -10,28 +10,29 @@ FaultClient sGraphFaultClient;
 CfbInfo sGraphCfbInfos[3];
 FaultClient sGraphUcodeFaultClient;
 
-// clang-format off
 UCodeInfo D_8012D230[3] = {
-    { UCODE_F3DZEX, D_80155F50 },
+    { UCODE_F3DZEX, gspF3DZEX2_NoN_PosLight_fifoTextStart },
     { UCODE_UNK, NULL },
-    { UCODE_S2DEX, D_80113070 },
+    { UCODE_S2DEX, gspS2DEX2d_fifoTextStart },
 };
 
 UCodeInfo D_8012D248[3] = {
-    { UCODE_F3DZEX, D_80155F50 },
+    { UCODE_F3DZEX, gspF3DZEX2_NoN_PosLight_fifoTextStart },
     { UCODE_UNK, NULL },
-    { UCODE_S2DEX, D_80113070 },
+    { UCODE_S2DEX, gspS2DEX2d_fifoTextStart },
 };
-// clang-format on
 
 void Graph_FaultClient(void) {
     void* nextFb = osViGetNextFramebuffer();
-    void* newFb = ((u32)SysCfb_GetFbPtr(0) != (u32)nextFb) ? SysCfb_GetFbPtr(0) : SysCfb_GetFbPtr(1);
+    void* newFb = (void*)((SysCfb_GetFbPtr(0) != (u32)nextFb) ? SysCfb_GetFbPtr(0) : SysCfb_GetFbPtr(1));
 
     osViSwapBuffer(newFb);
     Fault_WaitForInput();
     osViSwapBuffer(nextFb);
 }
+
+// TODO: merge Gfx and GfxMod to make this function's arguments consistent
+void UCodeDisas_Disassemble(UCodeDisas*, Gfx*);
 
 void Graph_DisassembleUCode(Gfx* workBuf) {
     UCodeDisas disassembler;
@@ -40,7 +41,7 @@ void Graph_DisassembleUCode(Gfx* workBuf) {
         UCodeDisas_Init(&disassembler);
         disassembler.enableLog = HREG(83);
         UCodeDisas_RegisterUCode(&disassembler, ARRAY_COUNT(D_8012D230), D_8012D230);
-        UCodeDisas_SetCurUCode(&disassembler, D_80155F50);
+        UCodeDisas_SetCurUCode(&disassembler, gspF3DZEX2_NoN_PosLight_fifoTextStart);
         UCodeDisas_Disassemble(&disassembler, workBuf);
         HREG(93) = disassembler.dlCnt;
         HREG(84) = disassembler.tri2Cnt * 2 + disassembler.tri1Cnt + (disassembler.quadCnt * 2) + disassembler.lineCnt;
@@ -74,7 +75,7 @@ void Graph_UCodeFaultClient(Gfx* workBuf) {
     UCodeDisas_Init(&disassembler);
     disassembler.enableLog = true;
     UCodeDisas_RegisterUCode(&disassembler, ARRAY_COUNT(D_8012D248), D_8012D248);
-    UCodeDisas_SetCurUCode(&disassembler, D_80155F50);
+    UCodeDisas_SetCurUCode(&disassembler, gspF3DZEX2_NoN_PosLight_fifoTextStart);
     UCodeDisas_Disassemble(&disassembler, workBuf);
     UCodeDisas_Destroy(&disassembler);
 }
@@ -101,22 +102,22 @@ void Graph_InitTHGA(GraphicsContext* gfxCtx) {
 GameStateOverlay* Graph_GetNextGameState(GameState* gameState) {
     void* gameStateInitFunc = GameState_GetInit(gameState);
 
-    if (gameStateInitFunc == TitleSetup_Init) {
+    if (gameStateInitFunc == Setup_Init) {
         return &gGameStateOverlayTable[0];
     }
-    if (gameStateInitFunc == Select_Init) {
+    if (gameStateInitFunc == MapSelect_Init) {
         return &gGameStateOverlayTable[1];
     }
-    if (gameStateInitFunc == Title_Init) {
+    if (gameStateInitFunc == ConsoleLogo_Init) {
         return &gGameStateOverlayTable[2];
     }
-    if (gameStateInitFunc == Gameplay_Init) {
+    if (gameStateInitFunc == Play_Init) {
         return &gGameStateOverlayTable[3];
     }
-    if (gameStateInitFunc == Opening_Init) {
+    if (gameStateInitFunc == TitleSetup_Init) {
         return &gGameStateOverlayTable[4];
     }
-    if (gameStateInitFunc == FileChoose_Init) {
+    if (gameStateInitFunc == FileSelect_Init) {
         return &gGameStateOverlayTable[5];
     }
 
@@ -202,25 +203,25 @@ void Graph_TaskSet00(GraphicsContext* gfxCtx) {
     task->ucode_boot_size = SysUcode_GetUCodeBootSize();
     task->ucode = SysUcode_GetUCode();
     task->ucode_data = SysUcode_GetUCodeData();
-    task->ucode_size = 0x1000;
-    task->ucode_data_size = 0x800;
-    task->dram_stack = (u64*)gGfxSPTaskStack;
+    task->ucode_size = SP_UCODE_SIZE;
+    task->ucode_data_size = SP_UCODE_DATA_SIZE;
+    task->dram_stack = gGfxSPTaskStack;
     task->dram_stack_size = sizeof(gGfxSPTaskStack);
     task->output_buff = gGfxSPTaskOutputBuffer;
-    task->output_buff_size = (u64*)((u8*)gGfxSPTaskOutputBuffer + sizeof(gGfxSPTaskOutputBuffer));
+    task->output_buff_size = gGfxSPTaskOutputBuffer + ARRAY_COUNT(gGfxSPTaskOutputBuffer);
     task->data_ptr = (u64*)gfxCtx->workBuffer;
 
     OPEN_DISPS(gfxCtx, "../graph.c", 828);
-    task->data_size = (u32)WORK_DISP - (u32)gfxCtx->workBuffer;
+    task->data_size = (uintptr_t)WORK_DISP - (uintptr_t)gfxCtx->workBuffer;
     CLOSE_DISPS(gfxCtx, "../graph.c", 830);
 
     { s32 pad2; } // Necessary to match stack usage
 
-    task->yield_data_ptr = (u64*)gGfxSPTaskYieldBuffer;
+    task->yield_data_ptr = gGfxSPTaskYieldBuffer;
     task->yield_data_size = sizeof(gGfxSPTaskYieldBuffer);
 
     scTask->next = NULL;
-    scTask->flags = OS_SC_RCP_MASK | OS_SC_SWAPBUFFER | OS_SC_LAST_TASK;
+    scTask->flags = OS_SC_NEEDS_RSP | OS_SC_NEEDS_RDP | OS_SC_SWAPBUFFER | OS_SC_LAST_TASK;
     if (SREG(33) & 1) {
         SREG(33) &= ~1;
         scTask->flags &= ~OS_SC_SWAPBUFFER;
@@ -231,10 +232,10 @@ void Graph_TaskSet00(GraphicsContext* gfxCtx) {
     scTask->msg = NULL;
 
     cfb = &sGraphCfbInfos[sGraphCfbInfoIdx++];
-    cfb->fb1 = gfxCtx->curFrameBuffer;
+    cfb->framebuffer = gfxCtx->curFrameBuffer;
     cfb->swapBuffer = gfxCtx->curFrameBuffer;
     cfb->viMode = gfxCtx->viMode;
-    cfb->features = gfxCtx->viFeatures;
+    cfb->viFeatures = gfxCtx->viFeatures;
     cfb->xScale = gfxCtx->xScale;
     cfb->yScale = gfxCtx->yScale;
     cfb->unk_10 = 0;
@@ -245,10 +246,10 @@ void Graph_TaskSet00(GraphicsContext* gfxCtx) {
 
     if (1) {}
 
-    gfxCtx->schedMsgQueue = &gSchedContext.cmdQueue;
+    gfxCtx->schedMsgQueue = &gScheduler.cmdQueue;
 
-    osSendMesg(&gSchedContext.cmdQueue, (OSMesg)scTask, OS_MESG_BLOCK);
-    Sched_SendEntryMsg(&gSchedContext);
+    osSendMesg(&gScheduler.cmdQueue, (OSMesg)scTask, OS_MESG_BLOCK);
+    Sched_Notify(&gScheduler);
 }
 
 void Graph_Update(GraphicsContext* gfxCtx, GameState* gameState) {
@@ -383,15 +384,15 @@ void Graph_Update(GraphicsContext* gfxCtx, GameState* gameState) {
 
     if (gIsCtrlr2Valid && CHECK_BTN_ALL(gameState->input[0].press.button, BTN_Z) &&
         CHECK_BTN_ALL(gameState->input[0].cur.button, BTN_L | BTN_R)) {
-        gSaveContext.gameMode = 0;
-        SET_NEXT_GAMESTATE(gameState, Select_Init, SelectContext);
+        gSaveContext.gameMode = GAMEMODE_NORMAL;
+        SET_NEXT_GAMESTATE(gameState, MapSelect_Init, MapSelectState);
         gameState->running = false;
     }
 
     if (gIsCtrlr2Valid && PreNmiBuff_IsResetting(gAppNmiBufferPtr) && !gameState->unk_A0) {
         // "To reset mode"
         osSyncPrintf(VT_COL(YELLOW, BLACK) "PRE-NMIによりリセットモードに移行します\n" VT_RST);
-        SET_NEXT_GAMESTATE(gameState, PreNMI_Init, PreNMIContext);
+        SET_NEXT_GAMESTATE(gameState, PreNMI_Init, PreNMIState);
         gameState->running = false;
     }
 }

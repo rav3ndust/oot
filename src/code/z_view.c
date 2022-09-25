@@ -24,7 +24,7 @@ View* View_New(GraphicsContext* gfxCtx) {
     View* view = SystemArena_MallocDebug(sizeof(View), "../z_view.c", 285);
 
     if (view != NULL) {
-        func_80106860(view, 0, sizeof(View)); // memset
+        __osMemset(view, 0, sizeof(View));
         View_Init(view, gfxCtx);
     }
 
@@ -135,7 +135,7 @@ void View_GetViewport(View* view, Viewport* viewport) {
     *viewport = view->viewport;
 }
 
-void View_ApplyShrinkWindow(View* view) {
+void View_ApplyLetterbox(View* view) {
     s32 varY;
     s32 varX;
     s32 pad;
@@ -145,7 +145,7 @@ void View_ApplyShrinkWindow(View* view) {
     s32 lry;
     GraphicsContext* gfxCtx = view->gfxCtx;
 
-    varY = ShrinkWindow_GetCurrentVal();
+    varY = Letterbox_GetSize();
 
     varX = -1; // The following is optimized to varX = 0 but affects codegen
 
@@ -296,7 +296,7 @@ s32 View_ApplyPerspective(View* view) {
     View_ViewportToVp(vp, &view->viewport);
     view->vp = *vp;
 
-    View_ApplyShrinkWindow(view);
+    View_ApplyLetterbox(view);
 
     gSPViewport(POLY_OPA_DISP++, vp);
     gSPViewport(POLY_XLU_DISP++, vp);
@@ -334,7 +334,7 @@ s32 View_ApplyPerspective(View* view) {
         Matrix_MtxToMtxF(projection, &mf);
         osSyncPrintf("projection\n");
         for (i = 0; i < 4; i++) {
-            osSyncPrintf("	%f	%f	%f	%f\n", mf.mf[i][0], mf.mf[i][1], mf.mf[i][2], mf.mf[i][3]);
+            osSyncPrintf("\t%f\t%f\t%f\t%f\n", mf.mf[i][0], mf.mf[i][1], mf.mf[i][2], mf.mf[i][3]);
         }
         osSyncPrintf("\n");
     }
@@ -360,8 +360,8 @@ s32 View_ApplyPerspective(View* view) {
     }
 
     View_ErrorCheckEyePosition(view->eye.x, view->eye.y, view->eye.z);
-    guLookAt(viewing, view->eye.x, view->eye.y, view->eye.z, view->at.x, view->at.y, view->at.z, view->up.x,
-             view->up.y, view->up.z);
+    guLookAt(viewing, view->eye.x, view->eye.y, view->eye.z, view->at.x, view->at.y, view->at.z, view->up.x, view->up.y,
+             view->up.z);
 
     view->viewing = *viewing;
 
@@ -373,7 +373,7 @@ s32 View_ApplyPerspective(View* view) {
         Matrix_MtxToMtxF(view->viewingPtr, &mf);
         osSyncPrintf("viewing\n");
         for (i = 0; i < 4; i++) {
-            osSyncPrintf("	%f	%f	%f	%f\n", mf.mf[i][0], mf.mf[i][1], mf.mf[i][2], mf.mf[i][3]);
+            osSyncPrintf("\t%f\t%f\t%f\t%f\n", mf.mf[i][0], mf.mf[i][1], mf.mf[i][2], mf.mf[i][3]);
         }
         osSyncPrintf("\n");
     }
@@ -398,7 +398,7 @@ s32 View_ApplyOrtho(View* view) {
     View_ViewportToVp(vp, &view->viewport);
     view->vp = *vp;
 
-    View_ApplyShrinkWindow(view);
+    View_ApplyLetterbox(view);
 
     gSPViewport(POLY_OPA_DISP++, vp);
     gSPViewport(POLY_XLU_DISP++, vp);
@@ -511,8 +511,8 @@ s32 View_ApplyPerspectiveToOverlay(View* view) {
     }
 
     View_ErrorCheckEyePosition(view->eye.x, view->eye.y, view->eye.z);
-    guLookAt(viewing, view->eye.x, view->eye.y, view->eye.z, view->at.x, view->at.y, view->at.z, view->up.x,
-             view->up.y, view->up.z);
+    guLookAt(viewing, view->eye.x, view->eye.y, view->eye.z, view->at.x, view->at.y, view->at.z, view->up.x, view->up.y,
+             view->up.z);
 
     view->viewing = *viewing;
 
@@ -530,8 +530,8 @@ s32 View_UpdateViewingMatrix(View* view) {
     OPEN_DISPS(view->gfxCtx, "../z_view.c", 878);
 
     View_ErrorCheckEyePosition(view->eye.x, view->eye.y, view->eye.z);
-    guLookAt(view->viewingPtr, view->eye.x, view->eye.y, view->eye.z, view->at.x, view->at.y, view->at.z,
-             view->up.x, view->up.y, view->up.z);
+    guLookAt(view->viewingPtr, view->eye.x, view->eye.y, view->eye.z, view->at.x, view->at.y, view->at.z, view->up.x,
+             view->up.y, view->up.z);
 
     CLOSE_DISPS(view->gfxCtx, "../z_view.c", 886);
 
@@ -596,8 +596,8 @@ s32 View_ApplyTo(View* view, s32 mask, Gfx** gfxp) {
         view->viewingPtr = viewing;
 
         View_ErrorCheckEyePosition(view->eye.x, view->eye.y, view->eye.z);
-        guLookAt(viewing, view->eye.x, view->eye.y, view->eye.z, view->at.x, view->at.y, view->at.z,
-                 view->up.x, view->up.y, view->up.z);
+        guLookAt(viewing, view->eye.x, view->eye.y, view->eye.z, view->at.x, view->at.y, view->at.z, view->up.x,
+                 view->up.y, view->up.z);
 
         view->viewing = *viewing;
 

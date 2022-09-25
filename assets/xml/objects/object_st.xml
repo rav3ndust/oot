@@ -1,5 +1,5 @@
 <Root>
-    <ExternalFile XmlPath="objects/gameplay_keep.xml" OutPath="objects/gameplay_keep/"/>
+    <ExternalFile XmlPath="objects/gameplay_keep.xml" OutPath="assets/objects/gameplay_keep/"/>
     <File Name="object_st" Segment="6">
         <Animation Name="object_st_Anim_000304" Offset="0x304"/>
         <Texture Name="object_st_Tex_000320" OutName="tex_00000320" Format="i4" Width="16" Height="8" Offset="0x320"/>
@@ -34,8 +34,8 @@
         <DList Name="object_st_DL_0048B8" Offset="0x48B8"/>
         <DList Name="object_st_DL_004950" Offset="0x4950"/>
         <DList Name="object_st_DL_0049E8" Offset="0x49E8"/>
-        <DList Name="object_st_DL_004DB0" Offset="0x4DB0"/>
-        <DList Name="object_st_DL_004EB8" Offset="0x4EB8"/>
+        <DList Name="gSkulltulaTokenDL" Offset="0x4DB0"/>
+        <DList Name="gSkulltulaTokenFlameDL" Offset="0x4EB8"/>
         <Limb Name="object_st_Limb_0050C8" LimbType="Standard" Offset="0x50C8"/>
         <Limb Name="object_st_Limb_0050D4" LimbType="Standard" Offset="0x50D4"/>
         <Limb Name="object_st_Limb_0050E0" LimbType="Standard" Offset="0x50E0"/>

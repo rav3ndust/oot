@@ -6,7 +6,58 @@
 
 struct BossGanon2;
 
-typedef void (*BossGanon2ActionFunc)(struct BossGanon2*, GlobalContext*);
+typedef void (*BossGanon2ActionFunc)(struct BossGanon2*, PlayState*);
+
+typedef enum {
+    /*  0 */ GANON_LIMB_NONE,
+    /*  1 */ GANON_LIMB_ROOT,
+    /*  2 */ GANON_LIMB_TORSO,
+    /*  3 */ GANON_LIMB_LEFT_SHOULDER,
+    /*  4 */ GANON_LIMB_LEFT_UPPER_ARM,
+    /*  5 */ GANON_LIMB_LEFT_FOREARM,
+    /*  6 */ GANON_LIMB_LEFT_WRIST,
+    /*  7 */ GANON_LIMB_LEFT_SWORD,
+    /*  8 */ GANON_LIMB_LEFT_HAND,
+    /*  9 */ GANON_LIMB_RIGHT_SHOULDER,
+    /* 10 */ GANON_LIMB_RIGHT_UPPER_ARM,
+    /* 11 */ GANON_LIMB_RIGHT_FOREARM,
+    /* 12 */ GANON_LIMB_RIGHT_WRIST,
+    /* 13 */ GANON_LIMB_RIGHT_SWORD,
+    /* 14 */ GANON_LIMB_RIGHT_HAND,
+    /* 15 */ GANON_LIMB_NECK,
+    /* 16 */ GANON_LIMB_JEWEL,
+    /* 17 */ GANON_LIMB_SNOUT,
+    /* 18 */ GANON_LIMB_OUTER_TEETH,
+    /* 19 */ GANON_LIMB_MOUTH,
+    /* 20 */ GANON_LIMB_INNER_TEETH,
+    /* 21 */ GANON_LIMB_JAW,
+    /* 22 */ GANON_LIMB_MIDDLE_HAIR_1,
+    /* 23 */ GANON_LIMB_MIDDLE_HAIR_2,
+    /* 24 */ GANON_LIMB_MIDDLE_HAIR_3,
+    /* 25 */ GANON_LIMB_LEFT_HAIR_1,
+    /* 26 */ GANON_LIMB_LEFT_HAIR_2,
+    /* 27 */ GANON_LIMB_LEFT_HAIR_3,
+    /* 28 */ GANON_LIMB_RIGHT_HAIR_1,
+    /* 29 */ GANON_LIMB_RIGHT_HAIR_2,
+    /* 30 */ GANON_LIMB_RIGHT_HAIR_3,
+    /* 31 */ GANON_LIMB_EYES,
+    /* 32 */ GANON_LIMB_HEAD,
+    /* 33 */ GANON_LIMB_LEFT_HORN,
+    /* 34 */ GANON_LIMB_RIGHT_HORN,
+    /* 35 */ GANON_LIMB_PELVIS,
+    /* 36 */ GANON_LIMB_LEFT_THIGH,
+    /* 37 */ GANON_LIMB_LEFT_SHIN,
+    /* 38 */ GANON_LIMB_LEFT_FOOT,
+    /* 39 */ GANON_LIMB_RIGHT_THIGH,
+    /* 40 */ GANON_LIMB_RIGHT_SHIN,
+    /* 41 */ GANON_LIMB_RIGHT_FOOT,
+    /* 42 */ GANON_LIMB_TAIL1,
+    /* 43 */ GANON_LIMB_TAIL2,
+    /* 44 */ GANON_LIMB_TAIL3,
+    /* 45 */ GANON_LIMB_TAIL4,
+    /* 46 */ GANON_LIMB_TAIL5,
+    /* 47 */ GANON_LIMB_MAX
+} GanonLimb;
 
 typedef struct BossGanon2 {
     /* 0x0000 */ Actor actor;
@@ -79,11 +130,11 @@ typedef struct BossGanon2 {
     /* 0x0394 */ f32 unk_394;
     /* 0x0398 */ u32 unk_398;
     /* 0x039C */ s16 unk_39C;
-    /* 0x039E */ s16 unk_39E;
+    /* 0x039E */ s16 subCamId;
     /* 0x03A0 */ char unk_3A0[0x4];
-    /* 0x03A4 */ Vec3f unk_3A4;
-    /* 0x03B0 */ Vec3f unk_3B0;
-    /* 0x03BC */ Vec3f unk_3BC;
+    /* 0x03A4 */ Vec3f subCamEye;
+    /* 0x03B0 */ Vec3f subCamAt;
+    /* 0x03BC */ Vec3f subCamUp;
     /* 0x03C8 */ char unk_3C8[0x48];
     /* 0x0410 */ Vec3f unk_410;
     /* 0x041C */ f32 unk_41C;
